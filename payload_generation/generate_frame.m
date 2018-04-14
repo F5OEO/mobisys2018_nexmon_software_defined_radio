@@ -63,6 +63,8 @@
 %                                                                         %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+pkg load communications
+
 normalize = @(sig) sig/sqrt(sum(sum(abs(sig).^2))/numel(sig));
 nexmonsamples = @(s,m) bitor(bitshift(bitand(int32(real(s) * m), hex2dec('ffff')), 16), ...
                     bitand(int32(imag(s) * m), hex2dec('ffff')));
@@ -112,22 +114,22 @@ NEX_SDR_STOP_TRANSMISSION = 428;
 
 fileID = fopen('myframe.sh','w');
 
-fprintf(fileID, '#!/system/bin/sh\n\n');
+fprintf(fileID, '#!/bin/sh\n\n');
 
 for i=1:n
     fprintf(fileID, 'nexutil -s%d -b -l1500 -v%s\n', NEX_WRITE_TEMPLATE_RAM, ...
-        matlab.net.base64encode(typecast(tx_signal_nexmon_hdr(:,i),'uint8')));
+        base64_encode(typecast(tx_signal_nexmon_hdr(:,i),'uint8')));
 end
 
 sdr_start_params = [ ...
     int32(length(tx_signal_nexmon)); ...    % num_samps
     int32(start_offset/4); ...              % start_offset
-    int32(hex2dec('1001')); ...             % chanspec
-    int32(40); ...                          % power_index
+    int32(hex2dec('1002')); ...             % chanspec
+    int32(20); ...                          % power_index
     int32(0); ...                           % endless
 ];
 
 fprintf(fileID, 'nexutil -s%d -b -l20 -v%s\n', NEX_SDR_START_TRANSMISSION, ...
-    matlab.net.base64encode(typecast(sdr_start_params(:),'uint8')));
+    base64_encode(typecast(sdr_start_params(:),'uint8')));
 
 fclose(fileID);
